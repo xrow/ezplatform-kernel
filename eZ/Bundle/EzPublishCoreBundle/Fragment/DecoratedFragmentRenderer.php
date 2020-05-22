@@ -6,18 +6,16 @@
  */
 namespace eZ\Bundle\EzPublishCoreBundle\Fragment;
 
-use eZ\Publish\Core\MVC\Symfony\Component\Serializer\SerializerTrait;
 use eZ\Publish\Core\MVC\Symfony\SiteAccess\SiteAccessAware;
 use eZ\Publish\Core\MVC\Symfony\SiteAccess;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpKernel\Controller\ControllerReference;
 use Symfony\Component\HttpKernel\Fragment\FragmentRendererInterface;
 use Symfony\Component\HttpKernel\Fragment\RoutableFragmentRenderer;
-use Symfony\Component\Serializer\Normalizer\AbstractNormalizer;
 
 class DecoratedFragmentRenderer implements FragmentRendererInterface, SiteAccessAware
 {
-    use SerializerTrait;
+    use SiteAccessSerializationTrait;
 
     /** @var \Symfony\Component\HttpKernel\Fragment\FragmentRendererInterface */
     private $innerRenderer;
@@ -66,12 +64,7 @@ class DecoratedFragmentRenderer implements FragmentRendererInterface, SiteAccess
             // Serialize the siteaccess to get it back after.
             // @see eZ\Publish\Core\MVC\Symfony\EventListener\SiteAccessMatchListener
             $siteAccess = $request->attributes->get('siteaccess');
-            $uri->attributes['serialized_siteaccess'] = json_encode($siteAccess);
-            $uri->attributes['serialized_siteaccess_matcher'] = $this->getSerializer()->serialize(
-                $siteAccess->matcher,
-                'json',
-                [AbstractNormalizer::IGNORED_ATTRIBUTES => ['request']]
-            );
+            $this->serializeSiteAccess($siteAccess, $uri);
         }
 
         return $this->innerRenderer->render($uri, $request, $options);
