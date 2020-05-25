@@ -24,7 +24,7 @@ trait SiteAccessSerializationTrait
         $uri->attributes['serialized_siteaccess_matcher'] = $this->getSerializer()->serialize(
             $siteAccess->matcher,
             'json',
-            [AbstractNormalizer::IGNORED_ATTRIBUTES => ['request', 'container', 'matcherBuilder']]
+            [AbstractNormalizer::IGNORED_ATTRIBUTES => ['request', 'container', 'matcherBuilder', 'connection']]
         );
         if ($siteAccess->matcher instanceof SiteAccess\Matcher\CompoundInterface) {
             $subMatchers = $siteAccess->matcher->getSubMatchers();

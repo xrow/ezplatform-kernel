@@ -6,6 +6,7 @@
  */
 namespace eZ\Publish\Core\MVC\Symfony\EventListener;
 
+use eZ\Bundle\EzPublishCoreBundle\SiteAccess\SiteAccessMatcherRegistry;
 use eZ\Publish\Core\Base\Exceptions\InvalidArgumentException;
 use eZ\Publish\Core\MVC\Symfony\Component\Serializer\SerializerTrait;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
@@ -33,12 +34,17 @@ class SiteAccessMatchListener implements EventSubscriberInterface
     /** @var \Symfony\Component\EventDispatcher\EventDispatcherInterface */
     protected $eventDispatcher;
 
+    /** @var \eZ\Bundle\EzPublishCoreBundle\SiteAccess\SiteAccessMatcherRegistry */
+    private $siteAccessMatcherRegistry;
+
     public function __construct(
         SiteAccessRouter $siteAccessRouter,
-        EventDispatcherInterface $eventDispatcher
+        EventDispatcherInterface $eventDispatcher,
+        SiteAccessMatcherRegistry $siteAccessMatcherRegistry
     ) {
         $this->siteAccessRouter = $siteAccessRouter;
         $this->eventDispatcher = $eventDispatcher;
+        $this->siteAccessMatcherRegistry = $siteAccessMatcherRegistry;
     }
 
     public static function getSubscribedEvents()
@@ -63,7 +69,15 @@ class SiteAccessMatchListener implements EventSubscriberInterface
             $siteAccess = $serializer->deserialize($request->attributes->get('serialized_siteaccess'), SiteAccess::class, 'json');
             if ($siteAccess->matcher !== null) {
                 if (in_array(SiteAccess\Matcher::class, class_implements($siteAccess->matcher))) {
-                    $siteAccess->matcher = $serializer->deserialize($request->attributes->get('serialized_siteaccess_matcher'), $siteAccess->matcher, 'json');
+                    if ($this->siteAccessMatcherRegistry->hasMatcher($siteAccess->matcher)) {
+                        $siteAccess->matcher = $this->siteAccessMatcherRegistry->getMatcher($siteAccess->matcher);
+                    } else {
+                        $siteAccess->matcher = $serializer->deserialize(
+                            $request->attributes->get('serialized_siteaccess_matcher'),
+                            $siteAccess->matcher,
+                            'json'
+                        );
+                    }
                 } else {
                     throw new InvalidArgumentException(
                         'matcher',
