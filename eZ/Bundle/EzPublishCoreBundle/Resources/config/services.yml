@@ -314,7 +314,7 @@ services:
         class: eZ\Bundle\EzPublishCoreBundle\Session\Handler\NativeSessionHandler
         arguments:
          - '%session.save_path%'
-         - 'redis'
+         - 'rediscluster'
 
     ezplatform.core.command.copy_subtree:
         class: eZ\Bundle\EzPublishCoreBundle\Command\CopySubtreeCommand
